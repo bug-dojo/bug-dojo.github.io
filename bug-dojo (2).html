@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バグ道場 — デバッグ修行アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1A1D23;
+    --ink-soft: #23262E;
+    --paper: #EDEAE2;
+    --paper-dim: #C9C5B9;
+    --rule: #3A3E47;
+    --rule-light: #4A4F5A;
+    --accent-go: #7FBF7F;
+    --accent-warn: #E8804D;
+    --accent-warn-dim: #8C4E30;
+    --danger: #D9634F;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  a { color: inherit; }
+
+  /* ===== Layout shell ===== */
+  .shell {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ===== Header / Hero ===== */
+  header.hero {
+    border-bottom: 1px solid var(--rule);
+    padding: 20px 0 0;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    font-size: 13px;
+    letter-spacing: .02em;
+    color: var(--paper-dim);
+  }
+
+  .topbar .mark {
+    color: var(--paper);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .hero-main {
+    padding: 64px 0 56px;
+    position: relative;
+  }
+
+  .hero-kanji {
+    position: absolute;
+    right: -10px;
+    top: 30px;
+    font-size: 220px;
+    line-height: 1;
+    color: var(--rule);
+    opacity: .35;
+    font-weight: 900;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .hero-main h1 {
+    font-size: clamp(38px, 6vw, 62px);
+    font-weight: 900;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+    max-width: 12ch;
+  }
+
+  .hero-main p.lede {
+    max-width: 46ch;
+    font-size: 17px;
+    color: #C7C3B8;
+    margin: 0 0 30px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+  }
+
+  .hero-stat {
+    border-left: 2px solid var(--accent-warn);
+    padding-left: 14px;
+  }
+
+  .hero-stat .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 26px;
+    font-weight: 700;
+    display: block;
+  }
+
+  .hero-stat .lbl {
+    font-size: 13px;
+    color: var(--paper-dim);
+  }
+
+  /* ===== Setup card ===== */
+  section.setup {
+    padding: 50px 0 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: end;
+  }
+
+  @media (max-width: 720px) {
+    .setup-grid { grid-template-columns: 1fr; }
+    .hero-kanji { display: none; }
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--paper-dim);
+    margin-bottom: 8px;
+  }
+
+  input[type="password"], input[type="text"], select {
+    width: 100%;
+    background: var(--ink-soft);
+    border: 1px solid var(--rule-light);
+    color: var(--paper);
+    padding: 12px 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    border-radius: 3px;
+  }
+
+  input:focus, select:focus, button:focus-visible, textarea:focus {
+    outline: 2px solid var(--accent-warn);
+    outline-offset: 1px;
+  }
+
+  select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--paper-dim) 50%),
+                       linear-gradient(135deg, var(--paper-dim) 50%, transparent 50%);
+    background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .key-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .key-row input { flex: 1; }
+
+  .btn {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease;
+  }
+
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent-warn);
+    color: #1A1208;
+  }
+  .btn-primary:hover { background: #ef9265; }
+  .btn-primary:disabled {
+    background: var(--rule-light);
+    color: var(--paper-dim);
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--rule-light);
+    color: var(--paper);
+  }
+  .btn-ghost:hover { border-color: var(--paper-dim); }
+
+  .key-note {
+    font-size: 12px;
+    color: var(--paper-dim);
+    margin-top: 8px;
+  }
+  .key-note a { text-decoration: underline; color: var(--accent-go); }
+
+  .dl-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 0 0;
+  }
+  .btn-dl {
+    background: transparent;
+    border: 1px solid var(--rule-light);
+    color: var(--paper-dim);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    padding: 8px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-dl:hover { border-color: var(--accent-go); color: var(--paper); }
+
+  .cors-note {
+    margin-top: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--accent-warn-dim);
+    border-left: 3px solid var(--accent-warn);
+    background: rgba(232,128,77,0.08);
+    border-radius: 3px;
+    font-size: 13px;
+    color: #E9C6AE;
+    display: none;
+  }
+  .cors-note.show { display: block; }
+  .cors-note strong { color: var(--accent-warn); }
+
+  /* ===== Steps ===== */
+  .steps {
+    padding: 56px 0 30px;
+  }
+
+  .step-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 36px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .step-tab {
+    flex: 1;
+    padding: 14px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--paper-dim);
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .step-tab:last-child { border-right: none; }
+
+  .step-tab .n {
+    font-family: "JetBrains Mono", monospace;
+    display: block;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .step-tab.active {
+    background: var(--ink-soft);
+    color: var(--paper);
+  }
+  .step-tab.active .n { color: var(--accent-warn); }
+
+  .step-tab.done { color: var(--accent-go); }
+  .step-tab.done .n { color: var(--accent-go); }
+
+  .panel {
+    display: none;
+  }
+  .panel.active { display: block; }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .panel-head h2 {
+    font-size: 22px;
+    margin: 0;
+  }
+
+  .panel-head .sub {
+    color: var(--paper-dim);
+    font-size: 14px;
+  }
+
+  /* code panel */
+  .code-frame {
+    border: 1px solid var(--rule-light);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #16181D;
+  }
+
+  .code-frame .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--paper-dim);
+  }
+
+  .code-frame .bar .dots span {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--rule-light);
+    margin-right: 5px;
+  }
+
+  textarea#editor {
+    width: 100%;
+    min-height: 360px;
+    background: transparent;
+    color: #E4E1D6;
+    border: none;
+    resize: vertical;
+    padding: 18px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    white-space: pre;
+    tab-size: 4;
+  }
+
+  .placeholder-box {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--paper-dim);
+    font-size: 14px;
+  }
+
+  .actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .status-line {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--accent-warn);
+    font-family: "JetBrains Mono", monospace;
+    min-height: 18px;
+  }
+
+  .verdict-box {
+    border: 1px solid var(--rule-light);
+    border-left: 4px solid var(--accent-go);
+    background: var(--ink-soft);
+    padding: 22px 24px;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.75;
+  }
+
+  .verdict-box.pending {
+    border-left-color: var(--rule-light);
+    color: var(--paper-dim);
+  }
+
+  .verdict-box.warn { border-left-color: var(--danger); }
+
+  .verdict-box pre {
+    background: #16181D;
+    border: 1px solid var(--rule-light);
+    border-radius: 4px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  .verdict-box pre code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #E4E1D6;
+    white-space: pre;
+    background: none;
+    padding: 0;
+  }
+  .verdict-box code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .92em;
+    background: var(--ink-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  .verdict-box p { margin: 0 0 12px; }
+  .verdict-box p:last-child { margin-bottom: 0; }
+
+  /* spinner */
+  .spin {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid var(--rule-light);
+    border-top-color: var(--accent-warn);
+    border-radius: 50%;
+    animation: sp .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* history log */
+  .log {
+    margin-top: 40px;
+    border-top: 1px solid var(--rule);
+    padding-top: 24px;
+  }
+  .log h3 {
+    font-size: 13px;
+    color: var(--paper-dim);
+    font-weight: 500;
+    margin: 0 0 12px;
+  }
+  .log-row {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--rule);
+    color: #B9B5A9;
+  }
+  .log-row .lv-tag {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent-warn);
+    min-width: 48px;
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 30px 0 60px;
+    color: var(--paper-dim);
+    font-size: 12.5px;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="shell">
+    <div class="topbar">
+      <span class="mark">バグ道場</span>
+      <a class="btn-dl" id="btn-download-html" download="bug-dojo.html">⭳ このページをHTMLで保存</a>
+    </div>
+    <div class="hero-main">
+      <div class="hero-kanji">虫</div>
+      <h1>バグを埋め込み<br>自分で、直す。</h1>
+      <p class="lede">AIがわざと壊れたPythonコードを書く。あなたはそれを見抜いて、直す。直し終えたらAIが採点する——地道な修行のための、小さな道場です。</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="num" id="stat-attempts">0</span>
+          <span class="lbl">挑戦回数（このセッション）</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" id="stat-lv">—</span>
+          <span class="lbl">現在の段位（LV）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="setup">
+  <div class="shell">
+    <div class="setup-grid">
+      <div>
+        <label for="apikey">Gemini APIキー</label>
+        <div class="key-row">
+          <input type="password" id="apikey" placeholder="AIza••••••••••••••••" autocomplete="off">
+          <button class="btn btn-ghost" id="toggle-key" type="button">表示</button>
+        </div>
+        <div class="key-note">キーはこの端末内でのみ使用し、保存も送信もされません（<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studioでキーを発行</a>）</div>
+      </div>
+      <div>
+        <label for="level">バグのレベル（LV）</label>
+        <select id="level">
+          <option value="1">LV1 — 見つけやすい構文エラー</option>
+          <option value="2" selected>LV2 — 軽いロジックのズレ</option>
+          <option value="3">LV3 — 境界値・off-by-one</option>
+          <option value="4">LV4 — 複数箇所に潜むバグ</option>
+          <option value="5">LV5 — 実行時まで気づきにくい罠</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="steps">
+  <div class="shell">
+
+    <div class="step-nav">
+      <div class="step-tab active" id="tab-1" data-step="1"><span class="n">01</span>出題</div>
+      <div class="step-tab" id="tab-2" data-step="2"><span class="n">02</span>修行</div>
+      <div class="step-tab" id="tab-3" data-step="3"><span class="n">03</span>採点</div>
+    </div>
+
+    <!-- STEP 1: 出題 -->
+    <div class="panel active" id="panel-1">
+      <div class="panel-head">
+        <h2>バグ入りコードを生成する</h2>
+        <span class="sub">選んだレベルに応じて、Geminiが意図的にバグを仕込んだコードを書きます</span>
+      </div>
+      <div class="code-frame">
+        <div class="bar">
+          <span class="mono">bug.py</span>
+          <span class="dots"><span></span><span></span><span></span></span>
+        </div>
+        <div class="placeholder-box" id="gen-placeholder">
+          左上でAPIキーとレベルを設定して、下のボタンを押してください
+        </div>
+        <textarea class="mono" id="generated-view" style="display:none;" readonly spellcheck="false"></textarea>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary" id="btn-generate">バグ入りコードを出題する</button>
+      </div>
+      <div class="status-line" id="gen-status" role="status" aria-live="polite"></div>
+      <div class="cors-note" id="gen-cors-note">
+        <strong>「Failed to fetch」について：</strong> Gemini APIはブラウザから直接の呼び出しを許可していないため、この画面内からは接続できません。この保存したHTMLファイルは見た目とロジックの確認用としてお使いいただき、実際にAPIを呼ぶ部分は、元のPythonスクリプトのように手元のサーバー（またはPython）経由で実行してください。
+      </div>
+    </div>
+
+    <!-- STEP 2: 修行 -->
+    <div class="panel" id="panel-2">
+      <div class="panel-head">
+        <h2>ここで直す</h2>
+        <span class="sub">エディタ内で直接編集できます。直し終えたら採点へ</span>
+      </div>
+      <div class="code-frame">
+        <div class="bar">
+          <span class="mono">bug.py — 編集中</span>
+          <span class="dots"><span></span><span></span><span></span></span>
+        </div>
+        <textarea class="mono" id="editor" spellcheck="false"></textarea>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary" id="btn-judge">直せた！採点してもらう</button>
+        <button class="btn btn-ghost" id="btn-reset-editor">出題コードに戻す</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: 採点 -->
+    <div class="panel" id="panel-3">
+      <div class="panel-head">
+        <h2>師範の判定</h2>
+        <span class="sub">元のバグ入りコードとあなたの修正結果を比較して評価します</span>
+      </div>
+      <div class="verdict-box pending" id="verdict" role="status" aria-live="polite">
+        まだ判定はありません。ステップ2で修正を終えてから採点してください。
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-ghost" id="btn-again">もう一度出題する（次のバグへ）</button>
+      </div>
+      <div class="cors-note" id="judge-cors-note">
+        <strong>「Failed to fetch」について：</strong> Gemini APIはブラウザからの直接呼び出しを許可していないため接続できません。採点機能を実際に動かすには、Pythonなどサーバー側から呼び出す必要があります。
+      </div>
+    </div>
+
+    <div class="log" id="log-section" style="display:none;">
+      <h3>これまでの記録</h3>
+      <div id="log-list"></div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="shell">
+    バグ道場は Gemini API（OpenAI互換エンドポイント）をブラウザから直接呼び出します。通信内容やAPIキーはこのページの外へ送信されません。
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = (sel) => document.querySelector(sel);
+
+  const apikeyInput = $('#apikey');
+  const toggleKeyBtn = $('#toggle-key');
+  const levelSelect = $('#level');
+  const btnGenerate = $('#btn-generate');
+  const genStatus = $('#gen-status');
+  const genPlaceholder = $('#gen-placeholder');
+  const generatedView = $('#generated-view');
+  const editor = $('#editor');
+  const btnJudge = $('#btn-judge');
+  const btnResetEditor = $('#btn-reset-editor');
+  const verdictBox = $('#verdict');
+  const btnAgain = $('#btn-again');
+  const statAttempts = $('#stat-attempts');
+  const statLv = $('#stat-lv');
+  const logSection = $('#log-section');
+  const logList = $('#log-list');
+  const genCorsNote = $('#gen-cors-note');
+  const judgeCorsNote = $('#judge-cors-note');
+  const btnDownloadHtml = $('#btn-download-html');
+
+  btnDownloadHtml.addEventListener('click', () => {
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    btnDownloadHtml.href = URL.createObjectURL(blob);
+  });
+
+  const tabs = { 1: $('#tab-1'), 2: $('#tab-2'), 3: $('#tab-3') };
+  const panels = { 1: $('#panel-1'), 2: $('#panel-2'), 3: $('#panel-3') };
+
+  let originalBuggyCode = '';
+  let attempts = 0;
+  let history = [];
+
+  toggleKeyBtn.addEventListener('click', () => {
+    const isPw = apikeyInput.type === 'password';
+    apikeyInput.type = isPw ? 'text' : 'password';
+    toggleKeyBtn.textContent = isPw ? '隠す' : '表示';
+  });
+
+  function goToStep(n) {
+    Object.keys(tabs).forEach(k => {
+      tabs[k].classList.toggle('active', Number(k) === n);
+      panels[k].classList.toggle('active', Number(k) === n);
+    });
+  }
+
+  Object.keys(tabs).forEach(k => {
+    tabs[k].addEventListener('click', () => {
+      // ステップ1完了前は2へ、2完了前(コード無し)は3へ行けないようにする
+      if (Number(k) >= 2 && !originalBuggyCode) return;
+      goToStep(Number(k));
+    });
+  });
+
+  function setStatus(el, msg, isError = false) {
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--danger)' : 'var(--accent-warn)';
+  }
+
+  function markDone(step) {
+    tabs[step].classList.add('done');
+  }
+
+  async function callGemini(messages) {
+    const key = apikeyInput.value.trim();
+    if (!key) {
+      throw new Error('APIキーが入力されていません。');
+    }
+    let res;
+    try {
+      res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model: 'models/gemini-3.5-flash-lite',
+          messages,
+          stream: false,
+        }),
+      });
+    } catch (networkErr) {
+      const e = new Error('Failed to fetch（通信できませんでした）');
+      e.isNetworkError = true;
+      throw e;
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`APIエラー（${res.status}）: ${text.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content ?? '';
+  }
+
+  function stripCodeFence(text) {
+    let t = text.trim();
+    const fence = t.match(/```[a-zA-Z]*\n([\s\S]*?)```/);
+    if (fence) return fence[1].trim();
+    return t;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Geminiの返答（プレーンテキスト想定だが、念のため ```コードブロック``` や `インラインコード` にも対応）を
+  // 読みやすいHTMLに変換する簡易レンダラー
+  function renderVerdictMarkdown(raw) {
+    const text = String(raw);
+    const parts = text.split(/```([a-zA-Z0-9_+-]*)\n?([\s\S]*?)```/g);
+    // parts は [前後の地の文, lang, code, 地の文, lang, code, ...] の繰り返しになる
+    let html = '';
+    for (let i = 0; i < parts.length; i += 3) {
+      const plain = parts[i] || '';
+      if (plain.trim()) {
+        const withInlineCode = escapeHtml(plain.trim())
+          .replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        html += `<p>${withInlineCode.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+      }
+      const lang = parts[i + 1];
+      const code = parts[i + 2];
+      if (code !== undefined) {
+        html += `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+      }
+    }
+    return html || `<p>${escapeHtml(text)}</p>`;
+  }
+
+  btnGenerate.addEventListener('click', async () => {
+    const lv = levelSelect.value;
+    btnGenerate.disabled = true;
+    genCorsNote.classList.remove('show');
+    setStatus(genStatus, '生成中…（Geminiがバグを仕込んでいます）');
+    try {
+      const content = await callGemini([
+        { role: 'system', content: 'あなたはデバッカー教育者のアシスタントです・' },
+        { role: 'user', content: `バグが含まれた、Pythonコードのみを返事して。バグのレベルは、LV${lv}で。コードブロックにせず、プレーンテキストとしてください。20行以内で書いてください` },
+      ]);
+      const code = stripCodeFence(content);
+      originalBuggyCode = code;
+      attempts += 1;
+      statAttempts.textContent = String(attempts);
+      statLv.textContent = 'LV' + lv;
+
+      genPlaceholder.style.display = 'none';
+      generatedView.style.display = 'block';
+      generatedView.value = code;
+      editor.value = code;
+
+      markDone(1);
+      setStatus(genStatus, '出題完了。「修行」タブでコードを直してください。');
+      goToStep(2);
+    } catch (err) {
+      setStatus(genStatus, err.message || '生成に失敗しました。', true);
+      if (err.isNetworkError) genCorsNote.classList.add('show');
+    } finally {
+      btnGenerate.disabled = false;
+    }
+  });
+
+  btnResetEditor.addEventListener('click', () => {
+    if (!originalBuggyCode) return;
+    if (confirm('出題時のコードに戻します。編集内容は失われます。よろしいですか？')) {
+      editor.value = originalBuggyCode;
+    }
+  });
+
+  btnJudge.addEventListener('click', async () => {
+    if (!originalBuggyCode) return;
+    const fixed = editor.value;
+    btnJudge.disabled = true;
+    judgeCorsNote.classList.remove('show');
+    verdictBox.classList.remove('warn');
+    verdictBox.classList.add('pending');
+    verdictBox.innerHTML = '<span class="spin"></span>師範が採点しています…';
+
+    try {
+      const content = await callGemini([
+        { role: 'system', content: 'あなたはデバッカー教育者のアシスタントです・' },
+        { role: 'user', content: `${originalBuggyCode}のばぐをなおして、次のコードにしました。${fixed}端的にバグは直せてるか、直せてないかと直せてないならどこがいけないかを30行以内で教えて。` },
+      ]);
+
+      verdictBox.classList.remove('pending');
+      verdictBox.innerHTML = renderVerdictMarkdown(content);
+      markDone(2);
+      markDone(3);
+      goToStep(3);
+
+      history.unshift({ lv: levelSelect.value, verdictPreview: content.replace(/```[a-zA-Z]*\n?/g, '').replace(/\n/g, ' ').slice(0, 80) });
+      renderLog();
+    } catch (err) {
+      verdictBox.classList.remove('pending');
+      verdictBox.classList.add('warn');
+      verdictBox.textContent = '判定に失敗しました: ' + (err.message || '不明なエラー');
+      if (err.isNetworkError) judgeCorsNote.classList.add('show');
+    } finally {
+      btnJudge.disabled = false;
+    }
+  });
+
+  btnAgain.addEventListener('click', () => {
+    originalBuggyCode = '';
+    generatedView.value = '';
+    generatedView.style.display = 'none';
+    genPlaceholder.style.display = 'block';
+    editor.value = '';
+    verdictBox.classList.remove('warn');
+    verdictBox.classList.add('pending');
+    verdictBox.textContent = 'まだ判定はありません。ステップ2で修正を終えてから採点してください。';
+    setStatus(genStatus, '');
+    tabs[2].classList.remove('done');
+    tabs[3].classList.remove('done');
+    goToStep(1);
+  });
+
+  function renderLog() {
+    if (history.length === 0) return;
+    logSection.style.display = 'block';
+    logList.innerHTML = history.slice(0, 8).map(h => `
+      <div class="log-row">
+        <span class="lv-tag">LV${h.lv}</span>
+        <span>${h.verdictPreview.replace(/</g, '&lt;')}…</span>
+      </div>
+    `).join('');
+  }
+})();
+</script>
+
+</body>
+</html>
