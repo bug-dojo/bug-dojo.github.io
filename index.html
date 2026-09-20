@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja" class="translated-ltr"><head>
+<html lang="ja">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>バグ道場 — デバッグ修行アプリ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #1A1D23;
@@ -219,27 +220,6 @@
   }
   .key-note a { text-decoration: underline; color: var(--accent-go); }
 
-  .dl-row {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px 0 0;
-  }
-  .btn-dl {
-    background: transparent;
-    border: 1px solid var(--rule-light);
-    color: var(--paper-dim);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12.5px;
-    padding: 8px 14px;
-    border-radius: 3px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn-dl:hover { border-color: var(--accent-go); color: var(--paper); }
-
   .cors-note {
     margin-top: 10px;
     padding: 14px 16px;
@@ -346,20 +326,57 @@
     margin-right: 5px;
   }
 
-  textarea#editor {
+  /* editor with syntax-highlight overlay */
+  .editor-wrap {
+    position: relative;
+    min-height: 360px;
+  }
+
+  .editor-wrap .highlight-layer,
+  .editor-wrap textarea {
+    margin: 0;
     width: 100%;
     min-height: 360px;
-    background: transparent;
-    color: #E4E1D6;
-    border: none;
-    resize: vertical;
     padding: 18px;
     font-family: "JetBrains Mono", monospace;
     font-size: 13.5px;
     line-height: 1.6;
     white-space: pre;
     tab-size: 4;
+    border: none;
+    box-sizing: border-box;
   }
+
+  .highlight-layer {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    pointer-events: none;
+    color: #E4E1D6;
+    background: transparent;
+  }
+  .highlight-layer code { font-family: inherit; }
+
+  .editor-wrap textarea {
+    position: relative;
+    resize: vertical;
+    background: transparent;
+    color: transparent;
+    caret-color: #E4E1D6;
+    overflow: auto;
+  }
+  .editor-wrap textarea::selection {
+    background: rgba(232, 128, 77, 0.35);
+    color: transparent;
+  }
+
+  /* python token colors */
+  .tok-kw   { color: #E8804D; }              /* キーワード */
+  .tok-str  { color: var(--accent-go); }      /* 文字列 */
+  .tok-num  { color: #9DB3E8; }               /* 数値 */
+  .tok-com  { color: #767C8A; font-style: italic; } /* コメント */
+  .tok-fn   { color: #E8C67D; }               /* 関数名・呼び出し */
+  .tok-self { color: #C79BE8; }               /* self */
 
   .placeholder-box {
     padding: 60px 24px;
@@ -442,6 +459,78 @@
   }
   @keyframes sp { to { transform: rotate(360deg); } }
 
+  /* run block (お試し実行) */
+  .run-block {
+    margin-top: 34px;
+    padding-top: 26px;
+    border-top: 1px dashed var(--rule);
+  }
+  .run-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .run-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--paper);
+  }
+  .run-mode {
+    display: inline-flex;
+    border: 1px solid var(--rule-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .run-mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--paper-dim);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .run-mode-btn + .run-mode-btn { border-left: 1px solid var(--rule-light); }
+  .run-mode-btn.active {
+    background: var(--ink-soft);
+    color: var(--accent-go);
+  }
+  .run-desc {
+    font-size: 12.5px;
+    color: var(--paper-dim);
+    margin: 0 0 14px;
+  }
+  .run-output-frame {
+    margin-top: 16px;
+    border: 1px solid var(--rule-light);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #16181D;
+  }
+  .run-output {
+    margin: 0;
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+    color: #DAD6C9;
+  }
+  .run-output .err { color: var(--danger); }
+  .run-output .sim-note {
+    display: block;
+    color: var(--paper-dim);
+    font-size: 11.5px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--rule);
+  }
+
   /* history log */
   .log {
     margin-top: 40px;
@@ -486,26 +575,27 @@
     * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
 </style>
-<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.zZZZhVqDDCw.L.W.O/am=BECAAQ/d=0/rs=AN8SPfreld5KM52lJgLi44qeAC03eRorPQ/m=el_main_css"></head>
+</head>
 <body>
 
 <header class="hero">
   <div class="shell">
     <div class="topbar">
-      <span class="mark"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグ道場</font></font></span>
+      <span class="mark">バグ道場</span>
+      <span>Gemini 採点式・自己修行型デバッグ演習</span>
     </div>
     <div class="hero-main">
-      <div class="hero-kanji"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">虫</font></font></div>
-      <h1><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグを埋め込み</font></font><br><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">自分で、やり直し。</font></font></h1>
-      <p class="lede"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">AIがわざとやめたPythonコードを書きます。あなたはそれを見抜いて、やり直し。やり直し終わったらAIがする課題——地道なため修行の、小さな道場です。</font></font></p>
+      <div class="hero-kanji">虫</div>
+      <h1>バグを埋め込み<br>自分で、直す。</h1>
+      <p class="lede">AIがわざと壊れたPythonコードを書く。あなたはそれを見抜いて、直す。直し終えたらAIが採点する——地道な修行のための、小さな道場です。</p>
       <div class="hero-stats">
         <div class="hero-stat">
-          <span class="num" id="stat-attempts"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">0</font></font></span>
-          <span class="lbl"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">挑戦回数（このセッション）</font></font></span>
+          <span class="num" id="stat-attempts">0</span>
+          <span class="lbl">挑戦回数（このセッション）</span>
         </div>
         <div class="hero-stat">
-          <span class="num" id="stat-lv"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">—</font></font></span>
-          <span class="lbl"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">現在の段位（LV）</font></font></span>
+          <span class="num" id="stat-lv">—</span>
+          <span class="lbl">現在の段位（LV）</span>
         </div>
       </div>
     </div>
@@ -516,21 +606,21 @@
   <div class="shell">
     <div class="setup-grid">
       <div>
-        <label for="apikey"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Gemini APIキー</font></font></label>
+        <label for="apikey">Gemini APIキー</label>
         <div class="key-row">
-          <input type="password" id="apikey" placeholder="アイザ•••••••••••••••••" autocomplete="off">
-          <button class="btn btn-ghost" id="toggle-key" type="button"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">表示</font></font></button>
+          <input type="password" id="apikey" placeholder="AIza••••••••••••••••" autocomplete="off">
+          <button class="btn btn-ghost" id="toggle-key" type="button">表示</button>
         </div>
-        <div class="key-note"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">キーはこの端末内でのみ使用し、保存も送信もされません（</font></font><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Google AI Studioでキーを発行</font></font></a><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">）</font></font></div>
+        <div class="key-note">キーはこの端末内でのみ使用し、保存も送信もされません（<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studioでキーを発行</a>）</div>
       </div>
       <div>
-        <label for="level"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグのレベル（LV）</font></font></label>
+        <label for="level">バグのレベル（LV）</label>
         <select id="level">
-          <option value="1"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">LV1 — 見つけやすい構文エラー</font></font></option>
-          <option value="2" selected=""><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">LV2 — 軽いロジックのズレ</font></font></option>
-          <option value="3"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">LV3 — 境界値・オフバイワン</font></font></option>
-          <option value="4"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">LV4 — 複数箇所に潜むバグ</font></font></option>
-          <option value="5"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">LV5 — 実行時まで気づきにくい罠</font></font></option>
+          <option value="1">LV1 — 見つけやすい構文エラー</option>
+          <option value="2" selected>LV2 — 軽いロジックのズレ</option>
+          <option value="3">LV3 — 境界値・off-by-one</option>
+          <option value="4">LV4 — 複数箇所に潜むバグ</option>
+          <option value="5">LV5 — 実行時まで気づきにくい罠</option>
         </select>
       </div>
     </div>
@@ -541,74 +631,101 @@
   <div class="shell">
 
     <div class="step-nav">
-      <div class="step-tab active" id="tab-1" data-step="1"><span class="n"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">01</font></font></span><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">出題</font></font></div>
-      <div class="step-tab" id="tab-2" data-step="2"><span class="n"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">02</font></font></span><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">修行</font></font></div>
-      <div class="step-tab" id="tab-3" data-step="3"><span class="n"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">03</font></font></span><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">指摘</font></font></div>
+      <div class="step-tab active" id="tab-1" data-step="1"><span class="n">01</span>出題</div>
+      <div class="step-tab" id="tab-2" data-step="2"><span class="n">02</span>修行</div>
+      <div class="step-tab" id="tab-3" data-step="3"><span class="n">03</span>採点</div>
     </div>
 
     <!-- STEP 1: 出題 -->
     <div class="panel active" id="panel-1">
       <div class="panel-head">
-        <h2><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグ入りコードを生成する</font></font></h2>
-        <span class="sub"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">選んだレベルに応じて、Geminiが意図的にバグを仕込んだコードを書きます</font></font></span>
+        <h2>バグ入りコードを生成する</h2>
+        <span class="sub">選んだレベルに応じて、Geminiが意図的にバグを仕込んだコードを書きます</span>
       </div>
       <div class="code-frame">
         <div class="bar">
-          <span class="mono"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグ.py</font></font></span>
+          <span class="mono">bug.py</span>
           <span class="dots"><span></span><span></span><span></span></span>
         </div>
-        <div class="placeholder-box" id="gen-placeholder"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">
+        <div class="placeholder-box" id="gen-placeholder">
           左上でAPIキーとレベルを設定して、下のボタンを押してください
-        </font></font></div>
-        <textarea class="mono" id="generated-view" style="display:none;" readonly="" spellcheck="false"></textarea>
+        </div>
+        <div class="editor-wrap" id="generated-wrap" style="display:none;">
+          <pre class="highlight-layer mono" id="generated-highlight" aria-hidden="true"><code></code></pre>
+          <textarea class="mono" id="generated-view" readonly spellcheck="false"></textarea>
+        </div>
       </div>
       <div class="actions-row">
-        <button class="btn btn-primary" id="btn-generate"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">バグ入りコードを出題する</font></font></button>
+        <button class="btn btn-primary" id="btn-generate">バグ入りコードを出題する</button>
       </div>
       <div class="status-line" id="gen-status" role="status" aria-live="polite"></div>
       <div class="cors-note" id="gen-cors-note">
-        <strong><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">「取得に失敗しました」について：</font></font></strong><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;"> Gemini API はブラウザから直接の呼び出しを許可していないため、この画面内からは接続できません。この保存したHTMLファイルは見た目とロジックの確認用としてお使いください、実際にAPIを呼ぶ部分は、元のPythonスクリプトのように手元のサーバー（またはPython）経由で実行してください。
-      </font></font></div>
+        <strong>「Failed to fetch」について：</strong> Gemini APIはブラウザから直接の呼び出しを許可していないため、この画面内からは接続できません。この保存したHTMLファイルは見た目とロジックの確認用としてお使いいただき、実際にAPIを呼ぶ部分は、元のPythonスクリプトのように手元のサーバー（またはPython）経由で実行してください。
+      </div>
     </div>
 
     <!-- STEP 2: 修行 -->
     <div class="panel" id="panel-2">
       <div class="panel-head">
-        <h2><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">ここでやり直し</font></font></h2>
-        <span class="sub"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">エディタ内で直接編集できます。やり直したら採点へ</font></font></span>
+        <h2>ここで直す</h2>
+        <span class="sub">エディタ内で直接編集できます。直し終えたら採点へ</span>
       </div>
       <div class="code-frame">
         <div class="bar">
-          <span class="mono"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">bug.py — 編集中</font></font></span>
+          <span class="mono">bug.py — 編集中</span>
           <span class="dots"><span></span><span></span><span></span></span>
         </div>
-        <textarea class="mono" id="editor" spellcheck="false"></textarea>
+        <div class="editor-wrap">
+          <pre class="highlight-layer mono" id="editor-highlight" aria-hidden="true"><code></code></pre>
+          <textarea class="mono" id="editor" spellcheck="false"></textarea>
+        </div>
       </div>
       <div class="actions-row">
-        <button class="btn btn-primary" id="btn-judge"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">直せた！採点してもらう</font></font></button>
-        <button class="btn btn-ghost" id="btn-reset-editor"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">出題コードに戻す</font></font></button>
+        <button class="btn btn-primary" id="btn-judge">直せた！採点してもらう</button>
+        <button class="btn btn-ghost" id="btn-reset-editor">出題コードに戻す</button>
+      </div>
+
+      <div class="run-block">
+        <div class="run-head">
+          <span class="run-title">お試し実行</span>
+          <div class="run-mode" role="radiogroup" aria-label="実行モード">
+            <button type="button" class="run-mode-btn active" id="mode-sim" data-mode="sim">簡易プレビュー</button>
+            <button type="button" class="run-mode-btn" id="mode-real" data-mode="real">本物のPythonで実行</button>
+          </div>
+        </div>
+        <p class="run-desc" id="run-desc">print文の出力だけを雰囲気でざっと見る、軽量なプレビューです。実際の計算結果は反映されません。</p>
+        <div class="actions-row">
+          <button class="btn btn-ghost" id="btn-run">実行してみる</button>
+        </div>
+        <div class="run-output-frame" id="run-output-frame" style="display:none;">
+          <div class="bar">
+            <span class="mono">実行結果</span>
+            <span class="dots"><span></span><span></span><span></span></span>
+          </div>
+          <pre class="mono run-output" id="run-output"></pre>
+        </div>
       </div>
     </div>
 
     <!-- STEP 3: 採点 -->
     <div class="panel" id="panel-3">
       <div class="panel-head">
-        <h2><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">師範の判定</font></font></h2>
-        <span class="sub"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">元のバグ入りコードとあなたの修正結果を比較して評価します</font></font></span>
+        <h2>師範の判定</h2>
+        <span class="sub">元のバグ入りコードとあなたの修正結果を比較して評価します</span>
       </div>
-      <div class="verdict-box pending" id="verdict" role="status" aria-live="polite"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">
-        事前判定はありません。ステップ2で修正を終えてから指摘してください。
-      </font></font></div>
+      <div class="verdict-box pending" id="verdict" role="status" aria-live="polite">
+        まだ判定はありません。ステップ2で修正を終えてから採点してください。
+      </div>
       <div class="actions-row">
-        <button class="btn btn-ghost" id="btn-again"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">もう一度出題する（次のバグへ）</font></font></button>
+        <button class="btn btn-ghost" id="btn-again">もう一度出題する（次のバグへ）</button>
       </div>
       <div class="cors-note" id="judge-cors-note">
-        <strong><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">「取得に失敗しました」について：</font></font></strong><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;"> Gemini API はブラウザからの直接閲覧を許可していないため接続できません。採点機能を実際に動かすには、Python など側サーバーから呼び出す必要があります。
-      </font></font></div>
+        <strong>「Failed to fetch」について：</strong> Gemini APIはブラウザからの直接呼び出しを許可していないため接続できません。採点機能を実際に動かすには、Pythonなどサーバー側から呼び出す必要があります。
+      </div>
     </div>
 
     <div class="log" id="log-section" style="display:none;">
-      <h3><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">これまでの記録</font></font></h3>
+      <h3>これまでの記録</h3>
       <div id="log-list"></div>
     </div>
 
@@ -616,9 +733,9 @@
 </section>
 
 <footer>
-  <div class="shell"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">
-    バグ道場は Gemini API（OpenAI 互換エンドポイント）をブラウザから直接閲覧できます。通信コンテンツや API キーはこのページの外へ送信されません。
-  </font></font></div>
+  <div class="shell">
+    バグ道場は Gemini API（OpenAI互換エンドポイント）をブラウザから直接呼び出します。通信内容やAPIキーはこのページの外へ送信されません。
+  </div>
 </footer>
 
 <script>
@@ -631,10 +748,19 @@
   const btnGenerate = $('#btn-generate');
   const genStatus = $('#gen-status');
   const genPlaceholder = $('#gen-placeholder');
+  const generatedWrap = $('#generated-wrap');
   const generatedView = $('#generated-view');
+  const generatedHighlight = $('#generated-highlight code');
   const editor = $('#editor');
+  const editorHighlight = $('#editor-highlight code');
   const btnJudge = $('#btn-judge');
   const btnResetEditor = $('#btn-reset-editor');
+  const btnRun = $('#btn-run');
+  const runDesc = $('#run-desc');
+  const runOutputFrame = $('#run-output-frame');
+  const runOutput = $('#run-output');
+  const modeSimBtn = $('#mode-sim');
+  const modeRealBtn = $('#mode-real');
   const verdictBox = $('#verdict');
   const btnAgain = $('#btn-again');
   const statAttempts = $('#stat-attempts');
@@ -643,13 +769,6 @@
   const logList = $('#log-list');
   const genCorsNote = $('#gen-cors-note');
   const judgeCorsNote = $('#judge-cors-note');
-  const btnDownloadHtml = $('#btn-download-html');
-
-  btnDownloadHtml.addEventListener('click', () => {
-    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const blob = new Blob([html], { type: 'text/html' });
-    btnDownloadHtml.href = URL.createObjectURL(blob);
-  });
 
   const tabs = { 1: $('#tab-1'), 2: $('#tab-2'), 3: $('#tab-3') };
   const panels = { 1: $('#panel-1'), 2: $('#panel-2'), 3: $('#panel-3') };
@@ -731,6 +850,66 @@
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // 簡易Pythonシンタックスハイライト（キーワード / 文字列 / 数値 / コメント / 関数呼び出し / self）
+  const PY_KEYWORDS = new Set([
+    'False','None','True','and','as','assert','async','await','break','class',
+    'continue','def','del','elif','else','except','finally','for','from',
+    'global','if','import','in','is','lambda','nonlocal','not','or','pass',
+    'raise','return','try','while','with','yield','print'
+  ]);
+
+  function highlightPython(code) {
+    const src = String(code);
+    let out = '';
+    // トークン化: コメント / 文字列(''' """ ' ") / 数値 / 識別子 / それ以外
+    const tokenRe = /(#[^\n]*)|('''[\s\S]*?'''|"""[\s\S]*?"""|'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*")|(\b\d+\.?\d*\b)|([A-Za-z_][A-Za-z0-9_]*)/g;
+    let last = 0;
+    let m;
+    while ((m = tokenRe.exec(src)) !== null) {
+      if (m.index > last) out += escapeHtml(src.slice(last, m.index));
+      const [full, comment, str, num, ident] = m;
+      if (comment) {
+        out += `<span class="tok-com">${escapeHtml(comment)}</span>`;
+      } else if (str) {
+        out += `<span class="tok-str">${escapeHtml(str)}</span>`;
+      } else if (num) {
+        out += `<span class="tok-num">${escapeHtml(num)}</span>`;
+      } else if (ident) {
+        const isCall = src[tokenRe.lastIndex] === '(';
+        if (ident === 'self') {
+          out += `<span class="tok-self">${ident}</span>`;
+        } else if (PY_KEYWORDS.has(ident)) {
+          out += `<span class="tok-kw">${ident}</span>`;
+        } else if (isCall) {
+          out += `<span class="tok-fn">${ident}</span>`;
+        } else {
+          out += ident;
+        }
+      }
+      last = tokenRe.lastIndex;
+    }
+    out += escapeHtml(src.slice(last));
+    return out + '\n';
+  }
+
+  function updateHighlight(highlightEl, code) {
+    highlightEl.innerHTML = highlightPython(code);
+  }
+
+  function syncScroll(textarea, highlightEl) {
+    highlightEl.parentElement.scrollTop = textarea.scrollTop;
+    highlightEl.parentElement.scrollLeft = textarea.scrollLeft;
+  }
+
+  function wireLiveHighlight(textarea, highlightEl) {
+    updateHighlight(highlightEl, textarea.value);
+    textarea.addEventListener('input', () => updateHighlight(highlightEl, textarea.value));
+    textarea.addEventListener('scroll', () => syncScroll(textarea, highlightEl));
+  }
+
+  wireLiveHighlight(editor, editorHighlight);
+  wireLiveHighlight(generatedView, generatedHighlight);
+
   // Geminiの返答（プレーンテキスト想定だが、念のため ```コードブロック``` や `インラインコード` にも対応）を
   // 読みやすいHTMLに変換する簡易レンダラー
   function renderVerdictMarkdown(raw) {
@@ -754,6 +933,175 @@
     return html || `<p>${escapeHtml(text)}</p>`;
   }
 
+  // ===== お試し実行 =====
+  let runMode = 'sim'; // 'sim' | 'real'
+  let pyodideInstance = null;
+  let pyodideLoading = null;
+
+  const RUN_DESC = {
+    sim: 'print文の出力だけを雰囲気でざっと見る、軽量なプレビューです。実際の計算結果は反映されません。',
+    real: 'ブラウザ内でPython実行環境（Pyodide）を読み込み、実際にコードを動かします。初回は読み込みに数秒〜十数秒かかります。※ ダウンロードしたHTMLファイルを開いた場合のみ動作します（Claude上のプレビュー画面では外部CDNの制約により失敗します）。',
+  };
+
+  function setRunMode(mode) {
+    runMode = mode;
+    modeSimBtn.classList.toggle('active', mode === 'sim');
+    modeRealBtn.classList.toggle('active', mode === 'real');
+    runDesc.textContent = RUN_DESC[mode];
+  }
+  modeSimBtn.addEventListener('click', () => setRunMode('sim'));
+  modeRealBtn.addEventListener('click', () => setRunMode('real'));
+
+  function showRunOutput(html) {
+    runOutputFrame.style.display = 'block';
+    runOutput.innerHTML = html;
+  }
+
+  // 簡易プレビュー: print(...) の呼び出しを字面から拾い、文字列/式をざっくり評価して表示する。
+  // インタプリタではないので、変数の値までは追跡しない（純粋な文字列・数値リテラルのみ解釈）。
+  function simulateRun(code) {
+    const lines = code.split('\n');
+    const printRe = /print\s*\((.*)\)\s*(#.*)?$/;
+    const out = [];
+    let sawAnyPrint = false;
+
+    lines.forEach((line) => {
+      const m = line.match(printRe);
+      if (!m) return;
+      sawAnyPrint = true;
+      const argsRaw = m[1].trim();
+      if (argsRaw === '') { out.push(''); return; }
+
+      // f-string / 通常の文字列リテラルのみ簡易対応。それ以外の式はそのままコードとして薄く表示。
+      const strLit = argsRaw.match(/^f?(['"])([\s\S]*)\1$/);
+      if (strLit) {
+        // f-string の {変数} 部分は値が追えないので <var> のプレースホルダに置換
+        const text = strLit[2].replace(/\{([^{}]*)\}/g, (_, expr) => `‹${expr.trim()}›`);
+        out.push(text);
+      } else {
+        out.push(`‹${argsRaw}›  (この式の実際の値は簡易プレビューでは計算されません)`);
+      }
+    });
+
+    if (!sawAnyPrint) {
+      return '<span class="sim-note">簡易プレビュー（print文だけを字面で抽出。実際の実行結果ではありません）</span>' +
+        '<span class="err">print() の呼び出しが見つからなかったので、表示できる出力がありません。</span>';
+    }
+    return '<span class="sim-note">簡易プレビュー（print文だけを字面で抽出。実際の実行結果ではありません）</span>' +
+      escapeHtml(out.join('\n'));
+  }
+
+  // Pyodide公式配布元（CORSヘッダが正しく設定されている）
+  const PYODIDE_SOURCES = [
+    {
+      label: 'jsDelivr',
+      script: 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js',
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/',
+    },
+    {
+      label: 'cdnjs',
+      script: 'https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.24.1/pyodide.js',
+      indexURL: 'https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.24.1/',
+    },
+  ];
+
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error(`スクリプトの読み込みに失敗しました: ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function loadPyodide() {
+    if (pyodideInstance) return pyodideInstance;
+    if (pyodideLoading) return pyodideLoading;
+    pyodideLoading = (async () => {
+      let lastErr = null;
+      for (const source of PYODIDE_SOURCES) {
+        try {
+          // 別のCDNから読み込み直す可能性があるため、既存のグローバルをクリアしてから試す
+          if (window.loadPyodide) delete window.loadPyodide;
+          await loadScriptOnce(source.script);
+          const py = await window.loadPyodide({ indexURL: source.indexURL });
+          pyodideInstance = py;
+          return py;
+        } catch (e) {
+          console.warn(`Pyodide読み込み失敗（${source.label}）:`, e);
+          lastErr = e;
+        }
+      }
+      pyodideLoading = null; // 失敗したら次回また読み込みを試せるようにする
+      throw lastErr || new Error('すべてのCDNからの読み込みに失敗しました。');
+    })();
+    return pyodideLoading;
+  }
+
+  async function realRun(code) {
+    showRunOutput('<span class="spin"></span>Python実行環境を読み込んでいます…（初回のみ時間がかかります）');
+    let py;
+    try {
+      py = await loadPyodide();
+    } catch (e) {
+      const detail = [e && e.name, e && e.message].filter(Boolean).join(': ') || String(e);
+      const stack = (e && e.stack) ? `\n\n${e.stack}` : '';
+      showRunOutput(
+        `<span class="err">実行環境の読み込みに失敗しました: ${escapeHtml(detail)}${escapeHtml(stack)}</span>` +
+        `<br><br><span class="sim-note">ブラウザの開発者ツール（コンソール）にも詳しいエラーが出ている場合があります。</span>`
+      );
+      console.error('Pyodide load error:', e);
+      return;
+    }
+
+    showRunOutput('<span class="spin"></span>実行中…');
+    const logs = [];
+    py.setStdout({ batched: (s) => logs.push(s) });
+    py.setStderr({ batched: (s) => logs.push(s) });
+
+    // input() が呼ばれても固まらないよう、空文字を返すダミーに差し替える
+    try {
+      await py.runPythonAsync(`
+import builtins
+def _dummy_input(*a, **k):
+    return ""
+builtins.input = _dummy_input
+`);
+    } catch (e) { /* ignore setup errors */ }
+
+    try {
+      await py.runPythonAsync(code);
+      const out = logs.join('\n').trim();
+      showRunOutput(escapeHtml(out || '（出力はありませんでした）'));
+    } catch (e) {
+      const out = logs.join('\n');
+      const errMsg = (e && e.message) ? e.message : String(e);
+      showRunOutput(
+        (out ? escapeHtml(out) + '\n' : '') +
+        `<span class="err">${escapeHtml(errMsg)}</span>`
+      );
+    }
+  }
+
+  btnRun.addEventListener('click', async () => {
+    const code = editor.value;
+    if (!code.trim()) {
+      showRunOutput('<span class="err">エディタにコードがありません。</span>');
+      return;
+    }
+    btnRun.disabled = true;
+    try {
+      if (runMode === 'sim') {
+        showRunOutput(simulateRun(code));
+      } else {
+        await realRun(code);
+      }
+    } finally {
+      btnRun.disabled = false;
+    }
+  });
+
   btnGenerate.addEventListener('click', async () => {
     const lv = levelSelect.value;
     btnGenerate.disabled = true;
@@ -771,9 +1119,11 @@
       statLv.textContent = 'LV' + lv;
 
       genPlaceholder.style.display = 'none';
-      generatedView.style.display = 'block';
+      generatedWrap.style.display = 'block';
       generatedView.value = code;
+      updateHighlight(generatedHighlight, code);
       editor.value = code;
+      updateHighlight(editorHighlight, code);
 
       markDone(1);
       setStatus(genStatus, '出題完了。「修行」タブでコードを直してください。');
@@ -790,6 +1140,7 @@
     if (!originalBuggyCode) return;
     if (confirm('出題時のコードに戻します。編集内容は失われます。よろしいですか？')) {
       editor.value = originalBuggyCode;
+      updateHighlight(editorHighlight, originalBuggyCode);
     }
   });
 
@@ -829,9 +1180,11 @@
   btnAgain.addEventListener('click', () => {
     originalBuggyCode = '';
     generatedView.value = '';
-    generatedView.style.display = 'none';
+    updateHighlight(generatedHighlight, '');
+    generatedWrap.style.display = 'none';
     genPlaceholder.style.display = 'block';
     editor.value = '';
+    updateHighlight(editorHighlight, '');
     verdictBox.classList.remove('warn');
     verdictBox.classList.add('pending');
     verdictBox.textContent = 'まだ判定はありません。ステップ2で修正を終えてから採点してください。';
@@ -852,8 +1205,7 @@
     `).join('');
   }
 })();
-</script><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="display: none; border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt=""><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">原文</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">この翻訳を評価してください</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">いただいたフィードバックは Google 翻訳の改善に役立てさせていただきます</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="良い翻訳" aria-label="良い翻訳" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="悪い翻訳" aria-label="悪い翻訳" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te_lib" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div>
+</script>
 
-
-
-</body></html>
+</body>
+</html>
